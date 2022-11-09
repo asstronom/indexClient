@@ -4,6 +4,7 @@ import (
 	"bufio"
 	"encoding/binary"
 	"encoding/json"
+	"flag"
 	"fmt"
 	"io"
 	"log"
@@ -89,9 +90,16 @@ func ReadResponse(r io.Reader) (*Response, error) {
 	return &resp, nil
 }
 
+var filename string
+
 func main() {
+	flag.StringVar(&filename, "i", "", "path to file with queries")
+	flag.Parse()
+	if filename == "" {
+		panic("input path is not specified!")
+	}
 	query := make([]string, 0, 10)
-	file, err := os.Open("data.txt")
+	file, err := os.Open(filename)
 	if err != nil {
 		log.Panicf("error opening file: %s", err)
 	}
