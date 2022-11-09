@@ -20,6 +20,36 @@ func MakeCode(code int64) []byte {
 	return c
 }
 
+func Itbs(code int64) []byte {
+	c := make([]byte, 8)
+	binary.PutVarint(c, code)
+	return c
+}
+
+func ReadBytes(r io.Reader, n int64) ([]byte, error) {
+	ba := make([]byte, n)
+	count, err := r.Read(ba)
+	if err != nil {
+		return nil, fmt.Errorf("error reading bytes: %w", err)
+	}
+	if int64(count) != n {
+		return nil, fmt.Errorf("not enough bytes")
+	}
+	return ba, nil
+}
+
+func ReadInt64(r io.Reader) (int64, error) {
+	ba := make([]byte, 8)
+	n, err := r.Read(ba)
+	if err != nil {
+		return 0, fmt.Errorf("error reading bytes: %w", err)
+	}
+	if n != 8 {
+		return 0, fmt.Errorf("not enough bytes")
+	}
+	res, _ := binary.Varint(ba)
+	return res, nil
+}
 func main() {
 	query := []string{"again", "myself", "judge"}
 
