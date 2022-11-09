@@ -81,6 +81,7 @@ func ReadResponse(r io.Reader) (*Response, error) {
 	if err != nil {
 		return nil, fmt.Errorf("error reading body length: %w", err)
 	}
+	fmt.Println("code:", resp.Code, "len:", resp.Length)
 	resp.Body, err = ReadBytes(r, resp.Length)
 	if err != nil {
 		return nil, fmt.Errorf("error reading body: %w", err)
@@ -100,7 +101,7 @@ func main() {
 		query = append(query, scanner.Text())
 	}
 
-	c, err := net.Dial("tcp4", ":8000")
+	c, err := net.Dial("tcp4", "host.docker.internal:8000")
 	if err != nil {
 		log.Panicf("error connecting to server: %s", err)
 	}

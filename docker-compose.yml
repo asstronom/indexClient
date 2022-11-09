@@ -1,0 +1,20 @@
+version: "3.8"
+
+# add the serivces needed (postgres,go)
+services:
+  client1:
+    container_name: index-client1
+    build: .
+    volumes:
+      - ./data.txt:/app/data.txt:ro
+  client2:
+    container_name: index-client2
+    build: .
+    volumes:
+      - ./data1.txt:/app/data.txt:ro
+  client3:
+    container_name: index-client3
+    build: .
+    volumes:
+      - ./data2.txt:/app/data.txt:ro
+
