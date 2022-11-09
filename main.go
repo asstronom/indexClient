@@ -1,10 +1,10 @@
 package main
 
 import (
-	"bytes"
 	"encoding/binary"
 	"encoding/json"
 	"fmt"
+	"io"
 	"log"
 	"net"
 )
@@ -50,6 +50,7 @@ func ReadInt64(r io.Reader) (int64, error) {
 	res, _ := binary.Varint(ba)
 	return res, nil
 }
+
 func WriteRequest(wr io.Writer, rq string) error {
 	rqb := make([]byte, 8, 8+len(rq))
 	binary.PutVarint(rqb[0:8], int64(len(rq)))
@@ -94,44 +95,30 @@ func main() {
 	}
 	fmt.Println("connected to server")
 	for _, q := range query {
-		var cod int64
-		var l int64
-		buf := bytes.Buffer{}
-		buf.Write(MakeCode(int64(len(q))))
-		buf.WriteString(q)
-		_, err := c.Write(buf.Bytes())
+		err := WriteRequest(c, q)
 		if err != nil {
-			log.Panicf("error sending query to server: %s", err)
+			log.Panicf("error writing request: %s", err)
 		}
 		fmt.Println("sent request:", q)
-		code := make([]byte, 8)
-		_, err = c.Read(code)
+		resp, err := ReadResponse(c)
 		if err != nil {
-			log.Panicf("error getting response from server: %s", err)
+			log.Panicf("error reading response: %s", err)
 		}
-		cod, _ = binary.Varint(code)
-		fmt.Println("got response:", cod)
-		if cod != 200 {
-			log.Printf("error occured during query '%s', code: %d\n", q, cod)
-			continue
-		}
-		_, err = c.Read(code)
-		if err != nil {
-			log.Panicf("error getting length of body: %s", err)
-		}
-		l, _ = binary.Varint(code)
-		if l == 0 {
-			log.Panicf("response is 0 bytes")
-		}
-		body := make([]byte, l)
-		_, err = c.Read(body)
-		if err != nil {
-			log.Panicf("error getting body: %s", err)
+		fmt.Printf("got response: %d\n", resp.Code)
+		if resp.Code != 200 {
+			if resp.Code == 404 {
+				fmt.Println("word is not present in index")
+				continue
+			}
+			if resp.Code == 500 {
+				log.Panic("internal server error")
+			}
 		}
 		res := []PostingWName{}
-		err = json.Unmarshal(body, &res)
+		err = json.Unmarshal(resp.Body, &res)
 		if err != nil {
-			log.Panicf("error unmarshaling body: %s", err)
+			log.Printf("error unmarshaling resp body: %s\n", err)
+			continue
 		}
 		fmt.Println(res, "\n")
 	}
