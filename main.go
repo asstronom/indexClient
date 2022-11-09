@@ -1,12 +1,14 @@
 package main
 
 import (
+	"bufio"
 	"encoding/binary"
 	"encoding/json"
 	"fmt"
 	"io"
 	"log"
 	"net"
+	"os"
 )
 
 type PostingWName struct {
@@ -87,7 +89,16 @@ func ReadResponse(r io.Reader) (*Response, error) {
 }
 
 func main() {
-	query := []string{"again", "myself", "judge"}
+	query := make([]string, 0, 10)
+	file, err := os.Open("data.txt")
+	if err != nil {
+		log.Panicf("error opening file: %s", err)
+	}
+	scanner := bufio.NewScanner(file)
+	scanner.Split(bufio.ScanWords)
+	for scanner.Scan() {
+		query = append(query, scanner.Text())
+	}
 
 	c, err := net.Dial("tcp4", ":8000")
 	if err != nil {
@@ -107,7 +118,7 @@ func main() {
 		fmt.Printf("got response: %d\n", resp.Code)
 		if resp.Code != 200 {
 			if resp.Code == 404 {
-				fmt.Println("word is not present in index")
+				fmt.Println("word is not present in index\n")
 				continue
 			}
 			if resp.Code == 500 {
