@@ -50,6 +50,41 @@ func ReadInt64(r io.Reader) (int64, error) {
 	res, _ := binary.Varint(ba)
 	return res, nil
 }
+func WriteRequest(wr io.Writer, rq string) error {
+	rqb := make([]byte, 8, 8+len(rq))
+	binary.PutVarint(rqb[0:8], int64(len(rq)))
+	rqb = append(rqb, []byte(rq)...)
+	_, err := wr.Write(rqb)
+	if err != nil {
+		return fmt.Errorf("error writing request: %w", err)
+	}
+	return nil
+}
+
+type Response struct {
+	Code   int64
+	Length int64
+	Body   []byte
+}
+
+func ReadResponse(r io.Reader) (*Response, error) {
+	var resp Response
+	var err error
+	resp.Code, err = ReadInt64(r)
+	if err != nil {
+		return nil, fmt.Errorf("error reading code: %w", err)
+	}
+	resp.Length, err = ReadInt64(r)
+	if err != nil {
+		return nil, fmt.Errorf("error reading body length: %w", err)
+	}
+	resp.Body, err = ReadBytes(r, resp.Length)
+	if err != nil {
+		return nil, fmt.Errorf("error reading body: %w", err)
+	}
+	return &resp, nil
+}
+
 func main() {
 	query := []string{"again", "myself", "judge"}
 
