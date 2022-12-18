@@ -9,4 +9,4 @@ RUN go mod download
 
 RUN go build -o /build
 
-ENTRYPOINT [ "/build" ]
+ENTRYPOINT [ "/build", "-i",  "data.txt" ]
